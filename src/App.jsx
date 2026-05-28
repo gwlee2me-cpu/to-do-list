@@ -1,5 +1,8 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import './App.css'
+import { auth, db, googleProvider } from './firebase'
+import { signInWithPopup, signOut, onAuthStateChanged } from 'firebase/auth'
+import { doc, getDoc, setDoc } from 'firebase/firestore'
 
 function App() {
   const [input, setInput] = useState('')
@@ -46,6 +49,9 @@ function App() {
   const [timerEditUnit, setTimerEditUnit] = useState(null)
   const [timerEditValue, setTimerEditValue] = useState('')
   const [openMenuId, setOpenMenuId] = useState(null)
+  const [user, setUser] = useState(null)
+  const [syncStatus, setSyncStatus] = useState('idle')
+  const isLoadingData = useRef(false)
 
   function toLocalISODate(date) {
     const y = date.getFullYear()
@@ -155,6 +161,73 @@ function App() {
       JSON.stringify({ todosByDate, weekTodosByWeek, activeTab, selectedDate, timer, stopwatch })
     )
   }, [todosByDate, weekTodosByWeek, activeTab, selectedDate, timer, stopwatch])
+
+  useEffect(() => {
+    const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
+      if (firebaseUser) {
+        isLoadingData.current = true
+        setSyncStatus('syncing')
+        try {
+          const docSnap = await getDoc(doc(db, 'users', firebaseUser.uid))
+          if (docSnap.exists()) {
+            const d = docSnap.data()
+            if (d.todosByDate) setTodosByDate(d.todosByDate)
+            if (d.weekTodosByWeek) setWeekTodosByWeek(d.weekTodosByWeek)
+            if (d.activeTab) setActiveTab(d.activeTab)
+            if (d.selectedDate) setSelectedDate(d.selectedDate)
+            if (d.timer !== undefined) setTimer(d.timer)
+            if (d.stopwatch !== undefined) setStopwatch(d.stopwatch)
+            const allTodos = [
+              ...Object.values(d.todosByDate ?? {}).flat(),
+              ...Object.values(d.weekTodosByWeek ?? {}).flat(),
+            ]
+            const maxId = allTodos.reduce((max, item) => Math.max(max, item?.id ?? -1), -1)
+            setNextTodoId(maxId + 1)
+          }
+          setSyncStatus('done')
+        } catch (e) {
+          console.error('Firestore load error', e)
+          setSyncStatus('error')
+        } finally {
+          isLoadingData.current = false
+        }
+      } else {
+        setSyncStatus('idle')
+      }
+      setUser(firebaseUser)
+    })
+    return () => unsubscribe()
+  }, [])
+
+  useEffect(() => {
+    if (!user || isLoadingData.current) return
+    setSyncStatus('syncing')
+    const timeout = setTimeout(async () => {
+      try {
+        await setDoc(doc(db, 'users', user.uid), {
+          todosByDate, weekTodosByWeek, activeTab, selectedDate, timer, stopwatch,
+        })
+        setSyncStatus('done')
+      } catch (e) {
+        console.error('Firestore save error', e)
+        setSyncStatus('error')
+      }
+    }, 1500)
+    return () => clearTimeout(timeout)
+  }, [user, todosByDate, weekTodosByWeek, activeTab, selectedDate, timer, stopwatch])
+
+  const handleSignIn = async () => {
+    try {
+      await signInWithPopup(auth, googleProvider)
+    } catch (e) {
+      console.error('Sign in error', e)
+    }
+  }
+
+  const handleSignOut = async () => {
+    await signOut(auth)
+    setSyncStatus('idle')
+  }
 
   useEffect(() => {
     let interval = null
@@ -620,6 +693,23 @@ function App() {
   return (
     <div className="app">
       <div className="card">
+        <div className="sync-bar">
+          {user ? (
+            <>
+              <span className="sync-status-text">
+                {syncStatus === 'syncing' ? '동기화 중...' : syncStatus === 'error' ? '⚠ 오류' : '✓ 동기화됨'}
+              </span>
+              <button className="sync-user-btn" onClick={handleSignOut}>
+                {user.photoURL && <img src={user.photoURL} alt="" className="user-avatar" />}
+                로그아웃
+              </button>
+            </>
+          ) : (
+            <button className="sync-login-btn" onClick={handleSignIn}>
+              🔄 Google로 동기화
+            </button>
+          )}
+        </div>
         {renderCalendar()}
         <div className="icon-buttons">
           <button
