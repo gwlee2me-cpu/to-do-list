@@ -45,6 +45,7 @@ function App() {
   const [isStopwatchRunning, setIsStopwatchRunning] = useState(false)
   const [timerEditUnit, setTimerEditUnit] = useState(null)
   const [timerEditValue, setTimerEditValue] = useState('')
+  const [openMenuId, setOpenMenuId] = useState(null)
 
   function toLocalISODate(date) {
     const y = date.getFullYear()
@@ -230,6 +231,28 @@ function App() {
     nextTodos.splice(dropIndex, 0, draggedItem)
     updateTodos(nextTodos)
     handleDragEnd()
+  }
+
+  const handleMoveToWeek = (todo) => {
+    const newItem = { ...todo, id: nextTodoId }
+    setWeekTodosByWeek((prev) => ({
+      ...prev,
+      [weekKey]: [...(prev[weekKey] ?? []), newItem],
+    }))
+    setNextTodoId((id) => id + 1)
+    setOpenMenuId(null)
+  }
+
+  const handleMoveToTomorrow = (todo) => {
+    const tomorrow = new Date(selectedDate + 'T00:00:00')
+    tomorrow.setDate(tomorrow.getDate() + 1)
+    const tomorrowISO = toLocalISODate(tomorrow)
+    setTodosByDate((prev) => ({
+      ...prev,
+      [selectedDate]: (prev[selectedDate] ?? []).filter((t) => t.id !== todo.id),
+      [tomorrowISO]: [...(prev[tomorrowISO] ?? []), todo],
+    }))
+    setOpenMenuId(null)
   }
 
   const handleDateSelect = (date) => {
@@ -507,6 +530,28 @@ function App() {
                 >
                   🟰
                 </button>
+                {activeTab === 'TODAY' && (
+                  <div className="move-menu-container">
+                    <button
+                      type="button"
+                      className="move-menu-trigger"
+                      onClick={() => setOpenMenuId(openMenuId === todo.id ? null : todo.id)}
+                      aria-label="이동"
+                    >
+                      ➕
+                    </button>
+                    {openMenuId === todo.id && (
+                      <div className="move-menu-dropdown">
+                        <button type="button" onClick={() => handleMoveToWeek(todo)}>
+                          → WEEK
+                        </button>
+                        <button type="button" onClick={() => handleMoveToTomorrow(todo)}>
+                          → TOMORROW
+                        </button>
+                      </div>
+                    )}
+                  </div>
+                )}
               </div>
             </div>
           ))}
