@@ -1,0 +1,48 @@
+name: Create Release
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build
+        run: npm run build
+        env:
+          NODE_ENV: production
+
+      - name: Zip dist
+        run: zip -r to-do-list.zip dist/
+
+      - name: Create Release
+        uses: softprops/action-gh-release@v2
+        with:
+          name: TO-DO List ${{ github.ref_name }}
+          body: |
+            ## TO-DO List ${{ github.ref_name }}
+
+            ### 다운로드
+            아래 `to-do-list.zip`을 받아서 압축을 풀면 빌드된 앱 파일이 들어있어요.
+            로컬에서 실행하려면 간단한 웹 서버가 필요합니다.
+
+            ### 웹에서 바로 사용
+            👉 https://gwlee2me-cpu.github.io/to-do-list/
+          files: to-do-list.zip
