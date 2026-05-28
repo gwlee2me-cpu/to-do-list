@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import './App.css'
 import { auth, db, googleProvider } from './firebase'
-import { signInWithRedirect, getRedirectResult, signOut, onAuthStateChanged } from 'firebase/auth'
+import { signInWithPopup, signInWithRedirect, getRedirectResult, signOut, onAuthStateChanged } from 'firebase/auth'
 import { doc, getDoc, setDoc } from 'firebase/firestore'
 
 function App() {
@@ -51,6 +51,7 @@ function App() {
   const [openMenuId, setOpenMenuId] = useState(null)
   const [user, setUser] = useState(null)
   const [syncStatus, setSyncStatus] = useState('idle')
+  const [authError, setAuthError] = useState('')
   const isLoadingData = useRef(false)
 
   function toLocalISODate(date) {
@@ -218,10 +219,19 @@ function App() {
   }, [user, todosByDate, weekTodosByWeek, activeTab, selectedDate, timer, stopwatch])
 
   const handleSignIn = async () => {
+    setAuthError('')
     try {
-      await signInWithRedirect(auth, googleProvider)
+      await signInWithPopup(auth, googleProvider)
     } catch (e) {
-      console.error('Sign in error', e)
+      if (e.code === 'auth/popup-blocked' || e.code === 'auth/popup-closed-by-user') {
+        try {
+          await signInWithRedirect(auth, googleProvider)
+        } catch (e2) {
+          setAuthError(e2.code ?? e2.message)
+        }
+      } else {
+        setAuthError(e.code ?? e.message)
+      }
     }
   }
 
@@ -706,9 +716,12 @@ function App() {
               </button>
             </>
           ) : (
-            <button className="sync-login-btn" onClick={handleSignIn}>
-              🔄 Google로 동기화
-            </button>
+            <div className="sync-login-wrap">
+              {authError && <span className="auth-error-text">{authError}</span>}
+              <button className="sync-login-btn" onClick={handleSignIn}>
+                🔄 Google로 동기화
+              </button>
+            </div>
           )}
         </div>
         {renderCalendar()}

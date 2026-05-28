@@ -73,6 +73,20 @@
   color: #b89a78;
 }
 
+.sync-login-wrap {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 4px;
+}
+
+.auth-error-text {
+  font-size: 11px;
+  color: #c0392b;
+  max-width: 260px;
+  text-align: right;
+}
+
 .title {
   font-size: 28px;
   font-weight: 600;
