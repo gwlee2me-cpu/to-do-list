@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import './App.css'
 import { auth, db, googleProvider } from './firebase'
-import { signInWithPopup, signOut, onAuthStateChanged } from 'firebase/auth'
+import { signInWithRedirect, getRedirectResult, signOut, onAuthStateChanged } from 'firebase/auth'
 import { doc, getDoc, setDoc } from 'firebase/firestore'
 
 function App() {
@@ -163,6 +163,7 @@ function App() {
   }, [todosByDate, weekTodosByWeek, activeTab, selectedDate, timer, stopwatch])
 
   useEffect(() => {
+    getRedirectResult(auth).catch(console.error)
     const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
       if (firebaseUser) {
         isLoadingData.current = true
@@ -218,7 +219,7 @@ function App() {
 
   const handleSignIn = async () => {
     try {
-      await signInWithPopup(auth, googleProvider)
+      await signInWithRedirect(auth, googleProvider)
     } catch (e) {
       console.error('Sign in error', e)
     }
