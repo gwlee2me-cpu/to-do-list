@@ -255,6 +255,28 @@ function App() {
     setOpenMenuId(null)
   }
 
+  const handleMoveToToday = (todo) => {
+    const newItem = { ...todo, id: nextTodoId }
+    setTodosByDate((prev) => ({
+      ...prev,
+      [selectedDate]: [...(prev[selectedDate] ?? []), newItem],
+    }))
+    setNextTodoId((id) => id + 1)
+    setOpenMenuId(null)
+  }
+
+  const handleMoveToNextWeek = (todo) => {
+    const monday = new Date(weekKey + 'T00:00:00')
+    monday.setDate(monday.getDate() + 7)
+    const nextWeekKey = toLocalISODate(monday)
+    setWeekTodosByWeek((prev) => ({
+      ...prev,
+      [weekKey]: (prev[weekKey] ?? []).filter((t) => t.id !== todo.id),
+      [nextWeekKey]: [...(prev[nextWeekKey] ?? []), todo],
+    }))
+    setOpenMenuId(null)
+  }
+
   const handleDateSelect = (date) => {
     setSelectedDate(toLocalISODate(date))
     setActiveTab('TODAY')
@@ -530,28 +552,39 @@ function App() {
                 >
                   🟰
                 </button>
-                {activeTab === 'TODAY' && (
-                  <div className="move-menu-container">
-                    <button
-                      type="button"
-                      className="move-menu-trigger"
-                      onClick={() => setOpenMenuId(openMenuId === todo.id ? null : todo.id)}
-                      aria-label="이동"
-                    >
-                      ➕
-                    </button>
-                    {openMenuId === todo.id && (
-                      <div className="move-menu-dropdown">
-                        <button type="button" onClick={() => handleMoveToWeek(todo)}>
-                          → WEEK
-                        </button>
-                        <button type="button" onClick={() => handleMoveToTomorrow(todo)}>
-                          → TOMORROW
-                        </button>
-                      </div>
-                    )}
-                  </div>
-                )}
+                <div className="move-menu-container">
+                  <button
+                    type="button"
+                    className="move-menu-trigger"
+                    onClick={() => setOpenMenuId(openMenuId === todo.id ? null : todo.id)}
+                    aria-label="이동"
+                  >
+                    ➕
+                  </button>
+                  {openMenuId === todo.id && (
+                    <div className="move-menu-dropdown">
+                      {activeTab === 'TODAY' ? (
+                        <>
+                          <button type="button" onClick={() => handleMoveToWeek(todo)}>
+                            → WEEK
+                          </button>
+                          <button type="button" onClick={() => handleMoveToTomorrow(todo)}>
+                            → TOMORROW
+                          </button>
+                        </>
+                      ) : (
+                        <>
+                          <button type="button" onClick={() => handleMoveToToday(todo)}>
+                            → TODAY
+                          </button>
+                          <button type="button" onClick={() => handleMoveToNextWeek(todo)}>
+                            → NEXT WEEK
+                          </button>
+                        </>
+                      )}
+                    </div>
+                  )}
+                </div>
               </div>
             </div>
           ))}
