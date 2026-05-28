@@ -211,9 +211,13 @@
   border-color: #d4a574;
 }
 
-.todo-item span {
-  word-break: break-word;
+.todo-text {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
   flex: 1;
+  min-width: 0;
+  word-break: break-word;
 }
 
 .calendar-card {
@@ -387,9 +391,9 @@
 }
 
 .todo-due-date {
+  display: block;
   color: #b89a78;
-  font-size: 13px;
-  margin-left: 2px;
+  font-size: 12px;
 }
 
 .todo-text.completed .todo-due-date {
@@ -566,5 +570,124 @@
   gap: 12px;
   justify-content: center;
   flex-wrap: wrap;
+}
+
+@media (max-width: 480px) {
+  .app {
+    padding: 0;
+    align-items: flex-start;
+  }
+
+  .card {
+    border-radius: 0;
+    padding: 20px 16px;
+    min-height: 100dvh;
+    box-shadow: none;
+  }
+
+  .title {
+    font-size: 22px;
+  }
+
+  .tab-label {
+    font-size: 12px;
+    margin-bottom: 14px;
+  }
+
+  .tabs {
+    gap: 8px;
+    margin-bottom: 16px;
+  }
+
+  .tab-button {
+    padding: 11px 0;
+    font-size: 13px;
+  }
+
+  .input-container {
+    gap: 8px;
+    margin-bottom: 20px;
+  }
+
+  .input {
+    font-size: 15px;
+    padding: 12px 12px;
+  }
+
+  .button {
+    padding: 10px 14px;
+    font-size: 14px;
+  }
+
+  .todo-item {
+    font-size: 15px;
+    padding: 12px 10px 12px 12px;
+  }
+
+  .checkbox-button {
+    font-size: 22px;
+    margin-right: 8px;
+    width: 28px;
+    min-width: 28px;
+  }
+
+  .todo-actions {
+    gap: 4px;
+    margin-left: 8px;
+  }
+
+  .drag-handle {
+    width: 36px;
+    min-width: 36px;
+    height: 36px;
+    font-size: 16px;
+  }
+
+  .delete-button {
+    font-size: 16px;
+    padding: 8px;
+  }
+
+  .move-menu-trigger {
+    width: 34px;
+    height: 34px;
+    font-size: 14px;
+  }
+
+  .calendar-weekday,
+  .calendar-date,
+  .calendar-cell {
+    min-height: 36px;
+    font-size: 13px;
+    border-radius: 8px;
+  }
+
+  .calendar-weekly,
+  .calendar-full {
+    gap: 8px;
+    padding: 8px;
+  }
+
+  .calendar-header {
+    margin-bottom: 12px;
+  }
+
+  .icon-buttons {
+    margin-bottom: 14px;
+  }
+
+  .timer-display,
+  .stopwatch-display {
+    font-size: 28px;
+  }
+
+  .timer-unit-input {
+    font-size: 28px;
+  }
+
+  .timer-section h3,
+  .stopwatch-section h3 {
+    font-size: 20px;
+  }
 }
 

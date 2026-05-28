@@ -528,9 +528,9 @@ function App() {
                 {todo.done ? '☑' : '□'}
               </button>
               <span className={`todo-text ${todo.done ? 'completed' : ''}`}>
-                {todo.text}
+                <span className="todo-text-content">{todo.text}</span>
                 {todo.dueDate && (
-                  <span className="todo-due-date"> / {formatDueDate(todo.dueDate)}</span>
+                  <span className="todo-due-date">{formatDueDate(todo.dueDate)}</span>
                 )}
               </span>
               <div className="todo-actions">
