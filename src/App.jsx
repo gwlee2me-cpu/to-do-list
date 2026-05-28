@@ -96,20 +96,32 @@ function App() {
   }
 
   const parseTodoInput = (text) => {
-    const match = text.trim().match(/^(\d{1,2})월\s*(\d{1,2})일\s+(.+)$/)
-    if (!match) return { text: text.trim(), dueDate: null }
+    const trimmed = text.trim()
 
-    const month = parseInt(match[1])
-    const day = parseInt(match[2])
-    const taskText = match[3].trim()
+    // 맨 앞 우선순위 숫자 추출: "1. " 또는 "1) "
+    let priority = null
+    let remaining = trimmed
+    const priorityMatch = trimmed.match(/^(\d+)[.)]\s+(.+)$/)
+    if (priorityMatch) {
+      priority = parseInt(priorityMatch[1], 10)
+      remaining = priorityMatch[2].trim()
+    }
 
-    const todayISO = toLocalISODate(new Date())
-    let year = new Date().getFullYear()
-    const mm = String(month).padStart(2, '0')
-    const dd = String(day).padStart(2, '0')
-    if (`${year}-${mm}-${dd}` < todayISO) year += 1
+    // 날짜 파싱
+    const dateMatch = remaining.match(/^(\d{1,2})월\s*(\d{1,2})일\s+(.+)$/)
+    if (dateMatch) {
+      const month = parseInt(dateMatch[1])
+      const day = parseInt(dateMatch[2])
+      const taskText = dateMatch[3].trim()
+      const todayISO = toLocalISODate(new Date())
+      let year = new Date().getFullYear()
+      const mm = String(month).padStart(2, '0')
+      const dd = String(day).padStart(2, '0')
+      if (`${year}-${mm}-${dd}` < todayISO) year += 1
+      return { text: taskText, dueDate: `${year}-${mm}-${dd}`, priority }
+    }
 
-    return { text: taskText, dueDate: `${year}-${mm}-${dd}` }
+    return { text: remaining, dueDate: null, priority }
   }
 
   const formatDueDate = (isoDate) => {
@@ -120,9 +132,16 @@ function App() {
   const getSortedTodos = (todos) => {
     const undone = todos.filter((t) => !t.done)
     const done = todos.filter((t) => t.done)
-    const withDate = undone.filter((t) => t.dueDate).sort((a, b) => a.dueDate.localeCompare(b.dueDate))
-    const withoutDate = undone.filter((t) => !t.dueDate)
-    return [...withDate, ...withoutDate, ...done]
+    const sorted = [...undone].sort((a, b) => {
+      const aPri = a.priority ?? Infinity
+      const bPri = b.priority ?? Infinity
+      if (aPri !== bPri) return aPri - bPri
+      if (a.dueDate && b.dueDate) return a.dueDate.localeCompare(b.dueDate)
+      if (a.dueDate) return -1
+      if (b.dueDate) return 1
+      return 0
+    })
+    return [...sorted, ...done]
   }
 
   const weekKey = getWeekKey(selectedDate)
@@ -161,8 +180,8 @@ function App() {
 
   const handleAddTodo = () => {
     if (input.trim()) {
-      const { text, dueDate } = parseTodoInput(input)
-      const newItem = { id: nextTodoId, text, dueDate, done: false }
+      const { text, dueDate, priority } = parseTodoInput(input)
+      const newItem = { id: nextTodoId, text, dueDate, priority, done: false }
       if (activeTab === 'TODAY') {
         setTodosByDate((prev) => ({
           ...prev,
@@ -528,7 +547,12 @@ function App() {
                 {todo.done ? '☑' : '□'}
               </button>
               <span className={`todo-text ${todo.done ? 'completed' : ''}`}>
-                <span className="todo-text-content">{todo.text}</span>
+                <span className="todo-text-content">
+                  {todo.priority != null && (
+                    <span className="todo-priority">{todo.priority}. </span>
+                  )}
+                  {todo.text}
+                </span>
                 {todo.dueDate && (
                   <span className="todo-due-date">{formatDueDate(todo.dueDate)}</span>
                 )}

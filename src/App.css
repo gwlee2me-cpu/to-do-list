@@ -390,6 +390,13 @@
   color: #9e9e9e;
 }
 
+.todo-priority {
+  color: #d4a574;
+  font-weight: 700;
+  font-size: 13px;
+  margin-right: 1px;
+}
+
 .todo-due-date {
   display: block;
   color: #b89a78;
